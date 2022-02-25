@@ -723,18 +723,18 @@ Consumer consumer =  client.newConsumer()
         .subscribe();
 ```
 
-The message redelivery behavior should be as follows.
+消息重新传递行为应该如下所示。
 
-| Redelivery count | Redelivery delay |
-|:---------------- |:---------------- |
-| 1                | 10 + 1 seconds   |
-| 2                | 10 + 2 seconds   |
-| 3                | 10 + 4 seconds   |
-| 4                | 10 + 8 seconds   |
-| 5                | 10 + 16 seconds  |
-| 6                | 10 + 32 seconds  |
-| 7                | 10 + 60 seconds  |
-| 8                | 10 + 60 seconds  |
+| 重发次数 | 重发延迟      |
+|:---- |:--------- |
+| 1    | 10 + 1 秒  |
+| 2    | 10 + 2 秒  |
+| 3    | 10 + 4 秒  |
+| 4    | 10 + 8 秒  |
+| 5    | 10 + 16 秒 |
+| 6    | 10 + 32 秒 |
+| 7    | 10 + 60 秒 |
+| 8    | 10 + 60 秒 |
 
 &gt; **Note** - The `negativeAckRedeliveryBackoff` does not work with `consumer.negativeAcknowledge(MessageId messageId)` because you are not able to get the redelivery count from the message ID. - If a consumer crashes, it triggers the redelivery of unacked messages. In this case, `RedeliveryBackoff` does not take effect and the messages might get redelivered earlier than the delay time from the backoff.
 

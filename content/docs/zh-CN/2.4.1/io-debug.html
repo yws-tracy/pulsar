@@ -94,11 +94,11 @@ docker run -d -it -p 6650:6650 -p 8080:8080 -v <span class="hljs-variable">$PWD<
 </code></pre></li>
 <li><p>使用 <code>mongo-sink-config.yaml</code> 文件配置 Mongo sink。</p>
 <pre><code class="hljs css language-bash">configs:
-mongoUri: <span class="hljs-string">"mongodb://pulsar-mongo:27017"</span>
-database: <span class="hljs-string">"pulsar"</span>
-collection: <span class="hljs-string">"messages"</span>
-batchSize: 2
-batchTimeMs: 500
+  mongoUri: <span class="hljs-string">"mongodb://pulsar-mongo:27017"</span>
+  database: <span class="hljs-string">"pulsar"</span>
+  collection: <span class="hljs-string">"messages"</span>
+  batchSize: 2
+  batchTimeMs: 500
 </code></pre>
 <pre><code class="hljs css language-bash">docker cp mongo-sink-config.yaml pulsar-mongo-standalone:/pulsar/
 </code></pre></li>

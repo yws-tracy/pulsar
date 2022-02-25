@@ -202,16 +202,16 @@ nettyMaxFrameSizeBytes=5253120
 <pre><code class="hljs css language-java">consumer.acknowledgeCumulative(msg);
 </code></pre>
 <blockquote>
-<p><strong>Note</strong>  <br>
-Cumulative acknowledgement cannot be used in <a href="#subscription-types">Shared subscription type</a>, because Shared subscription type involves multiple consumers which have access to the same subscription. 在共享订阅模式，消息都是单条确认模式。</p>
+<p><strong>注意</strong>  <br>
+累积确认不能在<a href="#subscription-types">共享订阅类型</a>中使用，因为共享订阅类型涉及多个具有相同订阅访问权限的消费者。 在共享订阅模式，消息都是单条确认模式。</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="取消确认"></a><a href="#取消确认" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>取消确认</h3>
-<p>The <a href="#negative-acknowledgement">negative acknowledgement</a> mechanism allows you to send a notification to the broker indicating the consumer did not process a message. When a consumer fails to consume a message and needs to re-consume it, the consumer sends a negative acknowledgement (nack) to the broker, triggering the broker to redeliver this message to the consumer.</p>
-<p>Messages are negatively acknowledged individually or cumulatively, depending on the consumption subscription type.</p>
-<p>In Exclusive and Failover subscription types, consumers only negatively acknowledge the last message they receive.</p>
-<p>In Shared and Key_Shared subscription types, consumers can negatively acknowledge messages individually.</p>
+<p><a href="#negative-acknowledgement">取消确认</a>机制，用于向broker发送一个通知，告诉broker：消费者没有处理这条消息。 当消费者无法消费某条消息，需要重新消费时，消费者会向broker发送一个取消确认(nack)，从而触发broker将该消息重新发送给消费者。</p>
+<p>根据消费订阅类型的不同，可以对消息进行单条取消确认或者累计取消确认。</p>
+<p>在独占和故障转移订阅类型中，消费者只对收到的最后一条消息进行取消确认。</p>
+<p>在Shared和Key_Shared订阅类型中，消费者可以对单条消息进行取消确认。</p>
 <p>请注意，订单订阅类型为否定， 比如Exclusive，Failover和Key_Shared之类的消息可能会导致发送失败的消息以不符合原始顺序的方式到达使用者。</p>
-<p>Use the following API to negatively acknowledge message consumption.</p>
+<p>使用以下API对消息消费进行取消确认。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer()
                 .topic(topic)
                 .subscriptionName(<span class="hljs-string">"sub-negative-ack"</span>)
@@ -228,53 +228,53 @@ message = consumer.receive();
 consumer.acknowledge(message);
 </code></pre>
 <blockquote>
-<p><strong>Note</strong>  <br>
-If batching is enabled, all messages in one batch are redelivered to the consumer.</p>
+<p><strong>注意</strong>  <br>
+如果启用了批次，那么一个批次中的所有消息都将重新发送给消费者。</p>
 </blockquote>
-<h3><a class="anchor" aria-hidden="true" id="negative-redelivery-backoff"></a><a href="#negative-redelivery-backoff" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Negative redelivery backoff</h3>
-<p>It happens sometimes that consumers fail to process messages successfully. In this case, you can use <a href="#negative-acknowledgement">negative acknowledgement</a> to redeliver the messages after consumption failures. For the Shared subscription type, the messages are redelivered to other consumers; for other subscription types, the messages are redelivered to the same consumer.</p>
-<p>But this is not flexible enough. A better way is to use the <strong>redelivery backoff mechanism</strong>. You can redeliver messages with different delays by setting the number of times the messages are retried.</p>
-<p>Use the following API to enable <code>Negative Redelivery Backoff</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="取消确认的重发补偿"></a><a href="#取消确认的重发补偿" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>取消确认的重发补偿</h3>
+<p>有时候，消费者无法成功处理消息。 在这种情况下，可以使用<a href="#negative-acknowledgement">取消确认</a>，在消费失败后重新发送消息。 对于共享订阅类型，消息被重新发送到其他消费者; 对于其他订阅类型，消息将重新发送到同一个消费者。</p>
+<p>但这还不够灵活。 一个更好的方法是使用<strong>重发补偿机制</strong>。 可以通过设置消息的重试次数来重新发送具有不同延迟的消息。</p>
+<p>使用下面的API来启用<code>Negative Redelivery Backoff</code>。</p>
 <pre><code class="hljs css language-java">consumer.negativeAckRedeliveryBackoff(MultiplierRedeliveryBackoff.builder()
         .minDelayMs(<span class="hljs-number">1000</span>)
         .maxDelayMs(<span class="hljs-number">60</span> * <span class="hljs-number">1000</span>)
         .build())
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="确认超时"></a><a href="#确认超时" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>确认超时</h3>
-<p>The acknowledgement timeout mechanism allows you to set a time range during which the client tracks the unacknowledged messages. After this acknowledgement timeout (<code>ackTimeout</code>) period, the client sends <code>redeliver unacknowledged messages</code> request to the broker, thus the broker resends the unacknowledged messages to the consumer.</p>
-<p>You can configure the acknowledgement timeout mechanism to redeliver the message if it is not acknowledged after <code>ackTimeout</code> or to execute a timer task to check the acknowledgement timeout messages during every <code>ackTimeoutTickTime</code> period.</p>
-<p>You can also use the redelivery backoff mechanism, redeliver messages with different delays by setting the number of times the messages is retried.</p>
-<p>If you want to use redelivery backoff, you can use the following API.</p>
+<p>确认超时机制允许设置一个时间范围，在此期间，客户端跟踪未确认的消息。 在确认超时时间(<code>ackTimeout</code>) 范围内，客户端向broker发送<code>重发未确认消息</code> 请求, broker将此未确认消息重新发送给消费者。</p>
+<p>可以配置确认超时机制，如果<code>ackTimeout</code>后未被确认，则重新发送该消息，或者在每个<code>ackTimeoutTickTime</code>时间周期内执行一个定时器任务查看确认超时消息。</p>
+<p>还可以使用重发补偿机制，通过设置消息的重试次数，以不同的延迟重新发送消息。</p>
+<p>如果使用重发补偿机制，可以使用以下API。</p>
 <pre><code class="hljs css language-java">consumer.ackTimeout(<span class="hljs-number">10</span>, TimeUnit.SECOND)
         .ackTimeoutRedeliveryBackoff(MultiplierRedeliveryBackoff.builder()
         .minDelayMs(<span class="hljs-number">1000</span>)
         .maxDelayMs(<span class="hljs-number">60000</span>)
         .multiplier(<span class="hljs-number">2</span>).build())
 </code></pre>
-<p>The message redelivery behavior should be as follows.</p>
+<p>消息重新传递行为应该如下所示。</p>
 <table>
 <thead>
-<tr><th style="text-align:left">Redelivery count</th><th style="text-align:left">Redelivery delay</th></tr>
+<tr><th style="text-align:left">重发次数</th><th style="text-align:left">重发延迟</th></tr>
 </thead>
 <tbody>
-<tr><td style="text-align:left">1</td><td style="text-align:left">10 + 1 seconds</td></tr>
-<tr><td style="text-align:left">2</td><td style="text-align:left">10 + 2 seconds</td></tr>
-<tr><td style="text-align:left">3</td><td style="text-align:left">10 + 4 seconds</td></tr>
-<tr><td style="text-align:left">4</td><td style="text-align:left">10 + 8 seconds</td></tr>
-<tr><td style="text-align:left">5</td><td style="text-align:left">10 + 16 seconds</td></tr>
-<tr><td style="text-align:left">6</td><td style="text-align:left">10 + 32 seconds</td></tr>
-<tr><td style="text-align:left">7</td><td style="text-align:left">10 + 60 seconds</td></tr>
-<tr><td style="text-align:left">8</td><td style="text-align:left">10 + 60 seconds</td></tr>
+<tr><td style="text-align:left">1</td><td style="text-align:left">10 + 1 秒</td></tr>
+<tr><td style="text-align:left">2</td><td style="text-align:left">10 + 2 秒</td></tr>
+<tr><td style="text-align:left">3</td><td style="text-align:left">10 + 4 秒</td></tr>
+<tr><td style="text-align:left">4</td><td style="text-align:left">10 + 8 秒</td></tr>
+<tr><td style="text-align:left">5</td><td style="text-align:left">10 + 16 秒</td></tr>
+<tr><td style="text-align:left">6</td><td style="text-align:left">10 + 32 秒</td></tr>
+<tr><td style="text-align:left">7</td><td style="text-align:left">10 + 60 秒</td></tr>
+<tr><td style="text-align:left">8</td><td style="text-align:left">10 + 60 秒</td></tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Note</strong></p>
+<p><strong>注意</strong></p>
 <ul>
-<li>If batching is enabled, all messages in one batch are redelivered to the consumer.</li>
-<li>Compared with acknowledgement timeout, negative acknowledgement is preferred. First, it is difficult to set a timeout value. Second, a broker resends messages when the message processing time exceeds the acknowledgement timeout, but these messages might not need to be re-consumed.</li>
+<li>如果启用了批次，那么一个批次中的所有消息都将重新发送给消费者。</li>
+<li>与确认超时相比，优先选择取消确认。 首先，很难设置超时时间值。 其次，当消息处理时间超过确认超时时，broker会重新发送消息，但这些消息可能不需要重新消费。</li>
 </ul>
 </blockquote>
-<p>Use the following API to enable acknowledgement timeout.</p>
+<p>使用以下API启用确认超时。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer()
                 .topic(topic)
                 .ackTimeout(<span class="hljs-number">2</span>, TimeUnit.SECONDS) <span class="hljs-comment">// the default value is 0</span>
@@ -290,8 +290,8 @@ message = consumer.receive();
 consumer.acknowledge(message);
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="死信主题"></a><a href="#死信主题" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>死信主题</h3>
-<p>Dead letter topic allows you to continue message consumption even some messages are not consumed successfully. The messages that are failed to be consumed are stored in a specific topic, which is called dead letter topic. You can decide how to handle the messages in the dead letter topic.</p>
-<p>Enable dead letter topic in a Java client using the default dead letter topic.</p>
+<p>死信主题允许客户端继续消息消费，即使一些消息没有被成功消费。 无法消费的消息存储在特定的主题中，称为死信主题。 可以决定如何处理死信主题中的消息</p>
+<p>在Java客户端中使用默认的死信主题来启用死信主题。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer(Schema.BYTES)
                 .topic(topic)
                 .subscriptionName(<span class="hljs-string">"my-subscription"</span>)
@@ -305,7 +305,7 @@ consumer.acknowledge(message);
 <p>The default dead letter topic uses this format:</p>
 <pre><code class="hljs">&lt;topicname&gt;-&lt;subscriptionname&gt;-DLQ
 </code></pre>
-<p>Use the Java client to specify the name of the dead letter topic.</p>
+<p>使用Java客户端指定死信主题的名称。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer(Schema.BYTES)
                 .topic(topic)
                 .subscriptionName(<span class="hljs-string">"my-subscription"</span>)
@@ -317,7 +317,7 @@ consumer.acknowledge(message);
                 .subscribe();
 
 </code></pre>
-<p>By default, there is no subscription during a DLQ topic creation. Without a just-in-time subscription to the DLQ topic, you may lose messages. To automatically create an initial subscription for the DLQ, you can specify the <code>initialSubscriptionName</code> parameter.</p>
+<p>默认情况下，在DLQ主题创建期间没有订阅。 没有及时订阅DLQ主题，可能会丢失消息。 要自动为DLQ创建一个初始订阅，可以指定<code>initialSubscriptionName</code>参数。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer(Schema.BYTES)
                 .topic(topic)
                 .subscriptionName(<span class="hljs-string">"my-subscription"</span>)
@@ -332,13 +332,13 @@ consumer.acknowledge(message);
 </code></pre>
 <p>死信主题依赖消息重试 Messages are redelivered either due to <a href="#acknowledgement-timeout">acknowledgement timeout</a> or <a href="#negative-acknowledgement">negative acknowledgement</a>. If you are going to use negative acknowledgement on a message, make sure it is negatively acknowledged before the acknowledgement timeout.</p>
 <blockquote>
-<p><strong>Note</strong>  <br>
-Currently, dead letter topic is enabled in Shared and Key_Shared subscription types.</p>
+<p><strong>注意</strong>  <br>
+目前，死信主题在共享订阅类型和Key_Shared订阅类型中可用。</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="retry-letter-topic"></a><a href="#retry-letter-topic" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Retry letter topic</h3>
-<p>For many online business systems, a message is re-consumed when exception occurs in the business logic processing. 若需要允许延时重新消费失败的消息，你可以配置生产者同时发送消息到业务主题和重试主题，并允许消费者自动重试消费。 With this setting, the messages that are not consumed will be stored in the retry letter topic. After the specified delay time, the consumer automatically consumes these messages from the retry letter topic.</p>
-<p>By default, automatic retry is disabled. You can set <code>enableRetry</code> to <code>true</code> to enable automatic retry on the consumer.</p>
-<p>Use the following API to consume messages from a retry letter topic.</p>
+<p>对于许多在线业务系统，当业务逻辑处理中出现异常时，会重新消费消息。 若需要允许延时重新消费失败的消息，你可以配置生产者同时发送消息到业务主题和重试主题，并允许消费者自动重试消费。 使用此设置，未消费的消息将存储在重试主题中。 在指定的延迟时间之后，消费者将自动接收来自重试主题的这些消息。</p>
+<p>缺省情况下，不启用自动重试功能。可以将<code>enableRetry</code>设置为<code>true</code>以启用对消费者的自动重试。</p>
+<p>使用以下API消费来自重试主题的消息。</p>
 <pre><code class="hljs css language-java">Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = pulsarClient.newConsumer(Schema.BYTES)
                 .topic(topic)
                 .subscriptionName(<span class="hljs-string">"my-subscription"</span>)
@@ -352,24 +352,24 @@ Currently, dead letter topic is enabled in Shared and Key_Shared subscription ty
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscribe();
 </code></pre>
-<p>The messages in the retry letter topic contain some special properties that are automatically created by the client.</p>
-<p>Special property | Description :--------------------|:----------- <code>REAL_TOPIC</code> | The real topic name. <code>ORIGIN_MESSAGE_ID</code> | The origin message ID. It is crucial for message tracking. <code>RECONSUMETIMES</code> | The retry consume times. <code>DELAY_TIME</code> | Message delay timeMs. <strong>Example</strong></p>
+<p>重试主题中的消息包含由客户端自动创建的一些特殊属性。</p>
+<p>特殊属性 | 描述:--------------------|:-----------<code>REAL_TOPIC</code> | 真正的主题名称 <code>ORIGIN_MESSAGE_ID</code> | 原始消息ID。 这对消息跟踪至关重要。 <code>RECONSUMETIMES</code> | 重试消费次数。 <code>DELAY_TIME</code> | 消息延迟时间。 <strong>示例</strong></p>
 <pre><code class="hljs">REAL_TOPIC = persistent://public/default/my-topic
 ORIGIN_MESSAGE_ID = 1:0:-1:0
 RECONSUMETIMES = 6
 DELAY_TIME = 3000
 </code></pre>
-<p>Use the following API to store the messages in a retrial queue.</p>
+<p>使用以下API将消息存储在重试队列中。</p>
 <pre><code class="hljs css language-java">consumer.reconsumeLater(msg, <span class="hljs-number">3</span>, TimeUnit.SECONDS);
 </code></pre>
-<p>Use the following API to add custom properties for the <code>reconsumeLater</code> function.</p>
+<p>使用下面的API为<code>reconsumeLater</code>函数添加自定义属性。</p>
 <pre><code class="hljs css language-java">Map&lt;String, String&gt; customProperties = <span class="hljs-keyword">new</span> HashMap&lt;String, String&gt;();
 customProperties.put(<span class="hljs-string">"custom-key-1"</span>, <span class="hljs-string">"custom-value-1"</span>);
 customProperties.put(<span class="hljs-string">"custom-key-2"</span>, <span class="hljs-string">"custom-value-2"</span>);
 consumer.reconsumeLater(msg, customProperties, <span class="hljs-number">3</span>, TimeUnit.SECONDS);
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="topic"></a><a href="#topic" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Topic</h2>
-<p>As in other pub-sub systems, topics in Pulsar are named channels for transmitting messages from producers to consumers. Topic names are URLs that have a well-defined structure:</p>
+<p>和其他发布-订阅系统一样，Pulsar中的主题被命名为从生产者向消费者传递消息的通道。主题名是具有良好定义结构的url:</p>
 <pre><code class="hljs css language-http">{persistent|non-persistent}://tenant/namespace/topic
 </code></pre>
 <table>
@@ -378,14 +378,14 @@ consumer.reconsumeLater(msg, customProperties, <span class="hljs-number">3</span
 </thead>
 <tbody>
 <tr><td style="text-align:left"><code>持久化</code> / <code>非持久化</code></td><td style="text-align:left">用来标识 topic 的类型。 Pulsar 支持两种主题类型：<a href="/docs/zh-CN/next/concepts-architecture-overview#persistent-storage">持久化</a>和<a href="#non-persistent-topics">非持久化</a>。 主题默认是持久化类型，如果不特殊指定主题类型，那主题就是持久化的。 对于持久化的主题，所有的消息都会被持久化的保存到磁盘当中(如果 broker 不是单机模式，消息会被持久化到多块磁盘)，而非持久化的主题的数据不会被保存到磁盘里面。</td></tr>
-<tr><td style="text-align:left"><code>租户</code></td><td style="text-align:left">The topic tenant within the instance. Tenants are essential to multi-tenancy in Pulsar, and spread across clusters.</td></tr>
+<tr><td style="text-align:left"><code>租户</code></td><td style="text-align:left">实例中的主题租户。租户对于Pulsar中的多租户特性来说是必不可少的，并且可以扩展到集群中。</td></tr>
 <tr><td style="text-align:left"><code>命名空间</code></td><td style="text-align:left">将相关联的 topic 作为一个组来管理，是管理 Topic 的基本单元。 大多数对 topic 的管理都是对<a href="#namespaces">命名空间</a>的一项配置。 每个租户里面可以有一个或者多个命名空间。</td></tr>
-<tr><td style="text-align:left"><code>topic</code></td><td style="text-align:left">The final part of the name. Topic names have no special meaning in a Pulsar instance.</td></tr>
+<tr><td style="text-align:left"><code>topic</code></td><td style="text-align:left">名字的最后一部分。主题名称在Pulsar实例中没有特殊意义。</td></tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>No need to explicitly create new topics</strong>  <br>
-You do not need to explicitly create topics in Pulsar. 如果客户端尝试从不存在的主题当中生产消息或消费消息，Pulsar 将会自动使用该<a href="#topics">主题名称</a>在该命名空间下创建同名的主题。 If no tenant or namespace is specified when a client creates a topic, the topic is created in the default tenant and namespace. You can also create a topic in a specified tenant and namespace, such as <code>persistent://my-tenant/my-namespace/my-topic</code>. <code>persistent://my-tenant/my-namespace/my-topic</code> means the <code>my-topic</code> topic is created in the <code>my-namespace</code> namespace of the <code>my-tenant</code> tenant.</p>
+<p><strong>不需要显式创建新的主题</strong>  <br>
+不需要在Pulsar中显式地创建主题。 如果客户端尝试从不存在的主题当中生产消息或消费消息，Pulsar 将会自动使用该<a href="#topics">主题名称</a>在该命名空间下创建同名的主题。 If no tenant or namespace is specified when a client creates a topic, the topic is created in the default tenant and namespace. You can also create a topic in a specified tenant and namespace, such as <code>persistent://my-tenant/my-namespace/my-topic</code>. <code>persistent://my-tenant/my-namespace/my-topic</code> means the <code>my-topic</code> topic is created in the <code>my-namespace</code> namespace of the <code>my-tenant</code> tenant.</p>
 </blockquote>
 <h2><a class="anchor" aria-hidden="true" id="命名空间"></a><a href="#命名空间" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>命名空间</h2>
 <p>命名空间是租户内部逻辑上的命名术语。 可以通过<a href="/docs/zh-CN/next/admin-api-namespaces#create">admin API</a>在租户下创建多个命名空间。 例如，包含多个应用程序的租户可以为每个应用程序创建单独的命名空间。 Namespace使得程序可以以层级的方式创建和管理topic Topic<code>my-tenant/app1</code> ，它的namespace是<code>app1</code>这个应用，对应的租户是 <code>my-tenant</code>。 你可以在namespace下创建任意数量的<a href="#topics">topic</a>。</p>
@@ -393,13 +393,13 @@ You do not need to explicitly create topics in Pulsar. 如果客户端尝试从�
 <p>订阅是命名好的配置规则，指导消息如何投递给消费者。 Four subscription types are available in Pulsar: <a href="#exclusive">exclusive</a>, <a href="#shared">shared</a>, <a href="#failover">failover</a>, and <a href="#key_shared">key_shared</a>. These types are illustrated in the figure below.</p>
 <p><img src="/docs/assets/pulsar-subscription-types.png" alt="Subscription types"></p>
 <blockquote>
-<p><strong>Pub-Sub or Queuing</strong>  <br>
-In Pulsar, you can use different subscriptions flexibly. 如果你想在消费者当中使用传统的”发布-订阅消息“，你可以为每个消费者指定一个特定的订阅名称， 这就是独占模式。 如果你想在消费者当中实现”消息队列“的效果，则多个消费者会拥有相同的订阅名称(如共享模式，灾备模式，key共享模式)。 如果你想同时实现两种效果，则可以将订阅模式和其他的订阅模式结合起来使用。</p>
+<p><strong>Pub-Sub或Queuing</strong>  <br>
+在Pulsar中，可以灵活地使用不同的订阅。 如果你想在消费者当中使用传统的”发布-订阅消息“，你可以为每个消费者指定一个特定的订阅名称， 这就是独占模式。 如果你想在消费者当中实现”消息队列“的效果，则多个消费者会拥有相同的订阅名称(如共享模式，灾备模式，key共享模式)。 如果你想同时实现两种效果，则可以将订阅模式和其他的订阅模式结合起来使用。</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="subscription-types"></a><a href="#subscription-types" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Subscription types</h3>
 <p>When a subscription has no consumers, its subscription type is undefined. The type of a subscription is defined when a consumer connects to it, and the type can be changed by restarting all consumers with a different configuration.</p>
 <h4><a class="anchor" aria-hidden="true" id="exclusive"></a><a href="#exclusive" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Exclusive</h4>
-<p>In <em>Exclusive</em> type, only a single consumer is allowed to attach to the subscription. If multiple consumers subscribe to a topic using the same subscription, an error occurs.</p>
+<p>在<em>独占</em>订阅类型中，只允许单个消费者附加到订阅。如果多个消费者使用相同订阅类型订阅一个主题，则会发生错误。</p>
 <p>In the diagram below, only <strong>Consumer A-0</strong> is allowed to consume messages.</p>
 <blockquote>
 <p>Exclusive模式为默认订阅模式。</p>
@@ -412,26 +412,26 @@ In Pulsar, you can use different subscriptions flexibly. 如果你想在消费�
 <p>In the diagram below, <strong>Consumer-B-0</strong> is the master consumer while <strong>Consumer-B-1</strong> would be the next consumer in line to receive messages if <strong>Consumer-B-0</strong> is disconnected.</p>
 <p><img src="/docs/assets/pulsar-failover-subscriptions.png" alt="灾备订阅"></p>
 <h4><a class="anchor" aria-hidden="true" id="shared共享"></a><a href="#shared共享" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Shared（共享）</h4>
-<p>In <em>shared</em> or <em>round robin</em> type, multiple consumers can attach to the same subscription. 消息通过round robin轮询机制分发给不同的消费者，并且每个消息仅会被分发给一个消费者。 当消费者断开连接，所有被发送给他，但没有被确认的消息将被重新安排，分发给其它存活的消费者。</p>
+<p>在<em>shared</em>或<em>round robin</em>类型中，多个消费者可以附加到相同订阅类型。 消息通过round robin轮询机制分发给不同的消费者，并且每个消息仅会被分发给一个消费者。 当消费者断开连接，所有被发送给他，但没有被确认的消息将被重新安排，分发给其它存活的消费者。</p>
 <p>In the diagram below, <strong>Consumer-C-1</strong> and <strong>Consumer-C-2</strong> are able to subscribe to the topic, but <strong>Consumer-C-3</strong> and others could as well.</p>
 <blockquote>
-<p><strong>Limitations of Shared type</strong>  <br>
-When using Shared type, be aware that: * Message ordering is not guaranteed. * You cannot use cumulative acknowledgment with Shared type.</p>
+<p><strong>共享订阅类型的限制</strong>  <br>
+当使用Shared类型时，请注意: *消息顺序不能保证。 *不能使用累积确认。</p>
 </blockquote>
 <p><img src="/docs/assets/pulsar-shared-subscriptions.png" alt="共享订阅"></p>
 <h4><a class="anchor" aria-hidden="true" id="key_shared"></a><a href="#key_shared" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Key_Shared</h4>
-<p>In <em>Key_Shared</em> type, multiple consumers can attach to the same subscription. Messages are delivered in a distribution across consumers and message with same key or same ordering key are delivered to only one consumer. No matter how many times the message is re-delivered, it is delivered to the same consumer. When a consumer connected or disconnected will cause served consumer change for some key of message.</p>
+<p>在<em>Key_Shared</em>类型中，多个消费者可以附加到相同订阅类型。 Messages are delivered in a distribution across consumers and message with same key or same ordering key are delivered to only one consumer. No matter how many times the message is re-delivered, it is delivered to the same consumer. When a consumer connected or disconnected will cause served consumer change for some key of message.</p>
 <p><img src="/docs/assets/pulsar-key-shared-subscriptions.png" alt="Key_Shared subscriptions"></p>
-<p>Note that when the consumers are using the Key_Shared subscription type, you need to <strong>disable batching</strong> or <strong>use key-based batching</strong> for the producers. There are two reasons why the key-based batching is necessary for Key_Shared subscription type: 1. Broker 根据消息的键值来分配消息，但默认的批处理方式可能无法将具有相同键值的消息打包到同一批次。 2. 由于是消费者而不是 Broker 从批次中调度消息，一个批次中第一个消息的密钥被认为是这个批次中所有消息的密钥，从而导致了上下文错误。</p>
-<p>基于密钥的批处理旨在解决上述问题。 这种批处理方法确保生产者将具有相同密钥的消息打包到同一批次。 没有密钥的信息被打包成一个批次，这个批次没有钥匙。 当 Broker 从这个批处理消息时，它使用<code>NON_KEY</code>作为密钥。 In addition, each consumer is associated with <strong>only one</strong> key and should receive <strong>only one message batch</strong> for the connected key. 默认情况下，你可以通过配置生产者被允许发送的消息数量来限制批处理。</p>
-<p>Below are examples of enabling the key-based batching under the Key_Shared subscription type, with <code>client</code> being the Pulsar client that you created.</p>
+<p>请注意，当消费者使用Key_Shared订阅类型时，需要<strong>生产者禁用批次</strong>或<strong>生产者使用基于key的批次</strong>。 基于key的批次对于Key_Shared订阅类型是必要的，原因有两个: 1. Broker 根据消息的键值来分配消息，但默认的批处理方式可能无法将具有相同键值的消息打包到同一批次。 2. 由于是消费者而不是 Broker 从批次中调度消息，一个批次中第一个消息的密钥被认为是这个批次中所有消息的密钥，从而导致了上下文错误。</p>
+<p>基于密钥的批处理旨在解决上述问题。 这种批处理方法确保生产者将具有相同密钥的消息打包到同一批次。 没有密钥的信息被打包成一个批次，这个批次没有钥匙。 当 Broker 从这个批处理消息时，它使用<code>NON_KEY</code>作为密钥。 此外，每个消费者只与<strong>一个</strong>key关联，并且对于关联key应该只接收<strong>一个消息批次</strong>。 默认情况下，你可以通过配置生产者被允许发送的消息数量来限制批处理。</p>
+<p>下面是在Key_Shared订阅类型下启用基于key的批次的示例，其中<code>client</code>是创建的Pulsar客户端。</p>
 <div class="tabs"><div class="nav-tabs"><div id="tab-group-2564-tab-2565" class="nav-link active" data-group="group_2564" data-tab="tab-group-2564-content-2565">Java</div><div id="tab-group-2564-tab-2566" class="nav-link" data-group="group_2564" data-tab="tab-group-2564-content-2566">C++</div><div id="tab-group-2564-tab-2567" class="nav-link" data-group="group_2564" data-tab="tab-group-2564-content-2567">Python</div></div><div class="tab-content"><div id="tab-group-2564-content-2565" class="tab-pane active" data-group="group_2564" tabindex="-1"><div><span><pre><code class="hljs">Producer&lt;byte[]&gt; producer = client.newProducer()<br />        .topic(&quot;my-topic&quot;)<br />        .batcherBuilder(BatcherBuilder.KEY_BASED)<br />        .create();<br /></code></pre>
 </span></div></div><div id="tab-group-2564-content-2566" class="tab-pane" data-group="group_2564" tabindex="-1"><div><span><pre><code class="hljs">ProducerConfiguration producerConfig;<br />producerConfig.setBatchingType(ProducerConfiguration::BatchingType::KeyBasedBatching);<br />Producer producer;<br />client.createProducer(&quot;my-topic&quot;, producerConfig, producer);<br /></code></pre>
 </span></div></div><div id="tab-group-2564-content-2567" class="tab-pane" data-group="group_2564" tabindex="-1"><div><span><pre><code class="hljs">producer = client.create_producer(topic='my-topic', batching_type=pulsar.BatchingType.KeyBased)<br /></code></pre>
 </span></div></div></div></div>
 <blockquote>
-<p><strong>Limitations of Key_Shared type</strong>  <br>
-When you use Key_Shared type, be aware that: * You need to specify a key or orderingKey for messages. * 你不能为Key_Shared类型使用累积确认。</p>
+<p><strong>Key_Shared订阅类型的限制</strong>  <br>
+当使用Key_Shared类型时，要注意: 需要为消息指定一个key或orderingKey。 * 你不能为Key_Shared类型使用累积确认。</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="订阅模式"></a><a href="#订阅模式" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>订阅模式</h3>
 <h4><a class="anchor" aria-hidden="true" id="什么是订阅模式"></a><a href="#什么是订阅模式" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>什么是订阅模式</h4>
@@ -441,8 +441,8 @@ When you use Key_Shared type, be aware that: * You need to specify a key or orde
 <li><p>当订阅的消费者重新启动时，它可以从它消费的最后一条消息继续消费。</p></li>
 </ul>
 <p>订阅模式 | 描述 | 笔记 |---|---|--- <code>Durable</code>|游标是持久的，它保留消息并持久化当前位置。<br>
-</br>If a broker restarts from a failure, it can recover the cursor from the persistent storage (BookKeeper), so that messages can continue to be consumed from the last consumed position.|<code>Durable</code> is the <strong>default</strong> subscription mode. <code>NonDurable</code>|游标是非持久的。<br>
-</br>Once a broker stops, the cursor is lost and can never be recovered, so that messages <strong>can not</strong> continue to be consumed from the last consumed position.|Reader’s subscription mode is <code>NonDurable</code> in nature and it does not prevent data in a topic from being deleted. Reader’s subscription mode <strong>can not</strong> be changed.</p>
+</br>如果broker从故障重新启动，可以从持久存储(BookKeeper) 恢复游标，这样消息就可以继续从上次消费的位置被消费。| <code>Durable</code>是<strong>默认</strong>订阅模式。 <code>NonDurable</code>|游标是非持久的。<br>
+</br>一旦broker停止，游标将丢失并且永远无法恢复，因此<strong>不能</strong>继续从最后一个消费位置消费消息。| Reader的订阅模式本质上是<code>NonDurable</code>，它不会阻止主题中的数据被删除。 Reader的订阅模式<strong>不能</strong>修改。</p>
 <p><a href="#concepts-messaging.md/#subscriptions">订阅</a>可以有一个或多个消费者。 当消费者订阅主题时，必须指定订阅名称。 持久订阅和非持久订阅可以具有相同的名称，它们彼此是独立的。 如果消费者指定了之前不存在的订阅，该订阅会自动创建。</p>
 <h4><a class="anchor" aria-hidden="true" id="when-to-use"></a><a href="#when-to-use" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>When to use</h4>
 <p>默认情况下，没有任何持久订阅的主题的消息被标记为已删除。 如果要防止消息被标记为已删除，可以为该主题创建持久订阅。 在这种情况下，只有已确认的消息被标记为已删除。 更多详细信息，请参阅<a href="/docs/zh-CN/next/cookbooks-retention-expiry">消息保留和过期</a>。</p>
@@ -490,11 +490,11 @@ Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; someTopicsConsumer = pu
 </code></pre>
 <p>关于代码示例，请参阅 <a href="/docs/zh-CN/next/client-libraries-java#multi-topic-subscriptions">Java</a>。</p>
 <h2><a class="anchor" aria-hidden="true" id="分区-topic"></a><a href="#分区-topic" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>分区 topic</h2>
-<p>普通的主题仅仅被保存在单个 broker中，这限制了主题的最大吞吐量。 <em>Partitioned topics</em> are a special type of topic that are handled by multiple brokers, thus allowing for higher throughput.</p>
+<p>普通的主题仅仅被保存在单个 broker中，这限制了主题的最大吞吐量。 <em>分区主题</em>是一种特殊类型的主题，由多个brokers处理，因此允许更高的吞吐量。</p>
 <p>分区主题实际是通过在底层拥有 N 个内部主题来实现的，这个 N 的数量就是等于分区的数量。 当向分区的topic发送消息，每条消息被路由到其中一个broker。 Pulsar自动处理跨broker的分区分布。</p>
 <p>下图对此做了阐明：</p>
 <p><img src="/docs/assets/partitioning.png" alt=""></p>
-<p>The <strong>Topic1</strong> topic has five partitions (<strong>P0</strong> through <strong>P4</strong>) split across three brokers. 因为分区多于broker数量，其中有两个broker要处理两个分区。第三个broker则只处理一个。（再次强调，分区的分布是Pulsar自动处理的）。</p>
+<p><strong>Topic1</strong>主题有五个分区(<strong>P0</strong>到<strong>P4</strong>) 分布在三个broker上。 因为分区多于broker数量，其中有两个broker要处理两个分区。第三个broker则只处理一个。（再次强调，分区的分布是Pulsar自动处理的）。</p>
 <p>这个topic的消息被广播给两个consumer。 The <a href="#routing-modes">routing mode</a> determines each message should be published to which partition, while the <a href="#subscription-types">subscription type</a> determines which messages go to which consumers.</p>
 <p>在大多数情况下，可以分别决定路由和订阅模式。 通常来讲，吞吐能力的要求，决定了 分区/路由 的方式。订阅模式则应该由应用的语义来做决定。</p>
 <p>There is no difference between partitioned topics and normal topics in terms of how subscription types work, as partitioning only determines what happens between when a message is published by a producer and processed and acknowledged by a consumer.</p>
@@ -515,7 +515,7 @@ Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; someTopicsConsumer = pu
 </tbody>
 </table>
 <h3><a class="anchor" aria-hidden="true" id="顺序保证"></a><a href="#顺序保证" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>顺序保证</h3>
-<p>The ordering of messages is related to MessageRoutingMode and Message Key. Usually, user would want an ordering of Per-key-partition guarantee.</p>
+<p>消息的顺序与MessageRoutingMode和Message Key相关。通常，可以提供Per-key-partition的顺序保证。</p>
 <p>当使用 <code>SinglePartition</code>或者<code>RoundRobinPartition</code>模式时，如果消息有key，消息将会被路由到匹配的分区，这是基于<a href="https://pulsar.apache.org/api/client/2.9.0-SNAPSHOT/org/apache/pulsar/client/api/ProducerBuilder">ProducerBuilder</a>
 中<a href="https://pulsar.apache.org/api/client/2.9.0-SNAPSHOT/org/apache/pulsar/client/api/HashingScheme">HashingScheme</a>
 指定的散列shema。</p>
@@ -567,17 +567,17 @@ Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = client.newCo
                 .topic(npTopic)
                 .create();
 </code></pre>
-<h2><a class="anchor" aria-hidden="true" id="message-redelivery"></a><a href="#message-redelivery" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Message redelivery</h2>
-<p>Apache Pulsar supports graceful failure handling and ensures critical data is not lost. Software will always have unexpected conditions and at times messages may not be delivered successfully. Therefore, it is important to have a built-in mechanism that handles failure, particularly in asynchronous messaging as highlighted in the following examples.</p>
+<h2><a class="anchor" aria-hidden="true" id="消息重发"></a><a href="#消息重发" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>消息重发</h2>
+<p>Apache Pulsar支持优雅的故障处理，并确保关键数据不会丢失。 软件总是会有意想不到的情况，有时消息可能无法成功发送。 因此，有一个内置的机制来处理失败是很重要的，特别是在异步消息传递中，如下面例子所示。</p>
 <ul>
-<li>Consumers get disconnected from the database or the HTTP server. When this happens, the database is temporarily offline while the consumer is writing the data to it and the external HTTP server that the consumer calls is momentarily unavailable.</li>
-<li>Consumers get disconnected from a broker due to consumer crashes, broken connections, etc. As a consequence, the unacknowledged messages are delivered to other available consumers.</li>
+<li>消费者断开与数据库或HTTP服务器的连接。 当发生这种情况，消费者向数据库写入数据时，数据库暂时脱机，消费者调用的外部HTTP服务器暂时不可用。</li>
+<li>由于消费者崩溃、连接中断等原因，消费者与broker断开连接。因此，未被确认的消息将被传递给其他可用的消费者。</li>
 </ul>
-<p>Apache Pulsar avoids these and other message delivery failures using at-least-once delivery semantics that ensure Pulsar processes a message more than once.</p>
-<p>To utilize message redelivery, you need to enable this mechanism before the broker can resend the unacknowledged messages in Apache Pulsar client. You can activate the message redelivery mechanism in Apache Pulsar using three methods.</p>
+<p>Apache Pulsar使用至少一次传递语义( 使Pulsar多次处理消息) 来避免消息传递失败。</p>
+<p>要利用消息重发，需要在broker重发未确认的消息之前，在Apache Pulsar客户端中启用此机制。 可以使用三种方法启用Apache Pulsar中的消息重发机制。</p>
 <ul>
-<li><a href="#negative-acknowledgement">Negative Acknowledgment</a></li>
-<li><a href="#acknowledgement-timeout">Acknowledgement Timeout</a></li>
+<li><a href="#negative-acknowledgement">取消确认</a></li>
+<li><a href="#acknowledgement-timeout">确认超时</a></li>
 <li><a href="#retry-letter-topic">Retry letter topic</a></li>
 </ul>
 <h2><a class="anchor" aria-hidden="true" id="消息保留和过期"></a><a href="#消息保留和过期" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>消息保留和过期</h2>
@@ -605,7 +605,7 @@ Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = client.newCo
 <p>最上面的场景中，消息去重被关闭。 Producer发布消息1到一个topic，消息到达broker后，被<a href="/docs/zh-CN/next/concepts-architecture-overview#persistent-storage">持久化</a>到BookKeeper。 然后producer又发送了消息1（可能因为某些重试逻辑），然后消息被接收后又持久化在BookKeeper，这意味着消息重复发生了。</p>
 <p>在第二个场景中，producer发送了消息1，消息被broker接收然后持久化，和第一个场景是一样的。 当producer再次发送消息时，broker知道已经收到个消息1，所以不会再持久化消息1.</p>
 <blockquote>
-<p>Message deduplication is handled at the namespace level or the topic level. For more instructions, see the <a href="/docs/zh-CN/next/cookbooks-deduplication">message deduplication cookbook</a>.</p>
+<p>消息重复数据删除在命名空间级别或主题级别进行处理。有关更多说明，请参阅 <a href="/docs/zh-CN/next/cookbooks-deduplication">消息重复数据删除示例</a>。</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="生产者幂等"></a><a href="#生产者幂等" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>生产者幂等</h3>
 <p>消息去重的另外一种方法是确保每条消息<em>仅生产一次</em>。 这种方法通常被叫做<strong>生产者幂等</strong>。 这种方式的缺点是，把消息去重的工作推给了应用去做。 在 Pulsar 中，消息去重是在 <a href="/docs/zh-CN/next/reference-terminology#broker">broker</a>上处理的，用户不需要去修改客户端的代码。 相反，你只需要通过修改配置就可以实现。 可以通过查看<a href="/docs/zh-CN/next/cookbooks-deduplication">消息去重指南</a>去了解更多详细信息。</p>
@@ -615,13 +615,13 @@ Consumer&lt;<span class="hljs-keyword">byte</span>[]&gt; consumer = client.newCo
 <p>你能够在<a href="https://www.splunk.com/en_us/blog/it/exactly-once-is-not-exactly-the-same.html">这篇博客</a>上获得更详细的信息。</p>
 </blockquote>
 <h2><a class="anchor" aria-hidden="true" id="消息延迟传递"></a><a href="#消息延迟传递" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>消息延迟传递</h2>
-<p>Delayed message delivery enables you to consume a message later. In this mechanism, a message is stored in BookKeeper. The <code>DelayedDeliveryTracker</code> maintains the time index (time -&gt; messageId) in memory after the message is published to a broker. This message will be delivered to a consumer once the specified delay is over.</p>
-<p>Delayed message delivery only works in Shared subscription type. In Exclusive and Failover subscription types, the delayed message is dispatched immediately.</p>
+<p>延迟的消息传递使客户端能够在后续消费消息。 在这种机制中，消息存储在BookKeeper中。 当消息发布给broker后，<code>DelayedDeliveryTracker</code>在内存中维护时间索引(time -&gt; messageId)。 一旦达到指定的延迟时间，此消息将传递给消费者。</p>
+<p>延迟消息传递只适用于共享订阅类型。在独占订阅和故障转移订阅类型中，将立即发送延迟的消息。</p>
 <p>如下图所示，说明了延时消息的实现机制：</p>
 <p><img src="/docs/assets/message_delay.png" alt="延时消息"></p>
 <p>Broker 保存消息是不经过任何检查的。 当消费者消费一条消息时，如果这条消息是延时消息，那么这条消息会被加入到<code>DelayedDeliveryTracker</code>当中。 订阅检查机制会从<code>DelayedDeliveryTracker</code>获取到超时的消息，并交付给消费者。</p>
 <h3><a class="anchor" aria-hidden="true" id="broker"></a><a href="#broker" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Broker</h3>
-<p>Delayed message delivery is enabled by default. You can change it in the broker configuration file as below:</p>
+<p>默认情况下启用延迟消息传递。可以在broker 配置文件中更改它，如下所示:</p>
 <pre><code class="hljs"># Whether to enable the delayed delivery for messages.
 # If disabled, messages are immediately delivered and there is no tracking overhead.
 delayedDeliveryEnabled=true
@@ -636,7 +636,7 @@ delayedDeliveryTickTimeMillis=1000
 <pre><code class="hljs css language-java"><span class="hljs-comment">// message to be delivered at the configured delay interval</span>
 producer.newMessage().deliverAfter(<span class="hljs-number">3L</span>, TimeUnit.Minute).value(<span class="hljs-string">"Hello Pulsar!"</span>).send();
 </code></pre>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/zh-CN/next/concepts-overview"><span class="arrow-prev">← </span><span>概述</span></a><a class="docs-next button" href="/docs/zh-CN/next/concepts-architecture-overview"><span>架构</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#消息">消息</a></li><li><a href="#producer">Producer</a><ul class="toc-headings"><li><a href="#发送模式">发送模式</a></li><li><a href="#访问模式">访问模式</a></li><li><a href="#compression">Compression</a></li><li><a href="#批量处理">批量处理</a></li><li><a href="#分块">分块</a></li></ul></li><li><a href="#消费者">消费者</a><ul class="toc-headings"><li><a href="#接收模式">接收模式</a></li><li><a href="#监听">监听</a></li><li><a href="#确认">确认</a></li><li><a href="#取消确认">取消确认</a></li><li><a href="#negative-redelivery-backoff">Negative redelivery backoff</a></li><li><a href="#确认超时">确认超时</a></li><li><a href="#死信主题">死信主题</a></li><li><a href="#retry-letter-topic">Retry letter topic</a></li></ul></li><li><a href="#topic">Topic</a></li><li><a href="#命名空间">命名空间</a></li><li><a href="#订阅">订阅</a><ul class="toc-headings"><li><a href="#subscription-types">Subscription types</a></li><li><a href="#订阅模式">订阅模式</a></li></ul></li><li><a href="#多主题订阅">多主题订阅</a></li><li><a href="#分区-topic">分区 topic</a><ul class="toc-headings"><li><a href="#路由模式">路由模式</a></li><li><a href="#顺序保证">顺序保证</a></li><li><a href="#散列scheme">散列scheme</a></li></ul></li><li><a href="#非持久topic">非持久topic</a><ul class="toc-headings"><li><a href="#性能">性能</a></li><li><a href="#客户端api">客户端API</a></li></ul></li><li><a href="#message-redelivery">Message redelivery</a></li><li><a href="#消息保留和过期">消息保留和过期</a></li><li><a href="#消息去重">消息去重</a><ul class="toc-headings"><li><a href="#生产者幂等">生产者幂等</a></li><li><a href="#去重和实际一次语义">去重和实际一次语义</a></li></ul></li><li><a href="#消息延迟传递">消息延迟传递</a><ul class="toc-headings"><li><a href="#broker">Broker</a></li><li><a href="#生产者producer">生产者（Producer）</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="copyright">Copyright © 2022 The Apache Software Foundation. All Rights Reserved. Apache, Apache Pulsar and the Apache feather logo are trademarks of The Apache Software Foundation.</section><span><script>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/docs/zh-CN/next/concepts-overview"><span class="arrow-prev">← </span><span>概述</span></a><a class="docs-next button" href="/docs/zh-CN/next/concepts-architecture-overview"><span>架构</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#消息">消息</a></li><li><a href="#producer">Producer</a><ul class="toc-headings"><li><a href="#发送模式">发送模式</a></li><li><a href="#访问模式">访问模式</a></li><li><a href="#compression">Compression</a></li><li><a href="#批量处理">批量处理</a></li><li><a href="#分块">分块</a></li></ul></li><li><a href="#消费者">消费者</a><ul class="toc-headings"><li><a href="#接收模式">接收模式</a></li><li><a href="#监听">监听</a></li><li><a href="#确认">确认</a></li><li><a href="#取消确认">取消确认</a></li><li><a href="#取消确认的重发补偿">取消确认的重发补偿</a></li><li><a href="#确认超时">确认超时</a></li><li><a href="#死信主题">死信主题</a></li><li><a href="#retry-letter-topic">Retry letter topic</a></li></ul></li><li><a href="#topic">Topic</a></li><li><a href="#命名空间">命名空间</a></li><li><a href="#订阅">订阅</a><ul class="toc-headings"><li><a href="#subscription-types">Subscription types</a></li><li><a href="#订阅模式">订阅模式</a></li></ul></li><li><a href="#多主题订阅">多主题订阅</a></li><li><a href="#分区-topic">分区 topic</a><ul class="toc-headings"><li><a href="#路由模式">路由模式</a></li><li><a href="#顺序保证">顺序保证</a></li><li><a href="#散列scheme">散列scheme</a></li></ul></li><li><a href="#非持久topic">非持久topic</a><ul class="toc-headings"><li><a href="#性能">性能</a></li><li><a href="#客户端api">客户端API</a></li></ul></li><li><a href="#消息重发">消息重发</a></li><li><a href="#消息保留和过期">消息保留和过期</a></li><li><a href="#消息去重">消息去重</a><ul class="toc-headings"><li><a href="#生产者幂等">生产者幂等</a></li><li><a href="#去重和实际一次语义">去重和实际一次语义</a></li></ul></li><li><a href="#消息延迟传递">消息延迟传递</a><ul class="toc-headings"><li><a href="#broker">Broker</a></li><li><a href="#生产者producer">生产者（Producer）</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="copyright">Copyright © 2022 The Apache Software Foundation. All Rights Reserved. Apache, Apache Pulsar and the Apache feather logo are trademarks of The Apache Software Foundation.</section><span><script>
       const community = document.querySelector("a[href='#community']").parentNode;
       const communityMenu =
         '<li>' +
