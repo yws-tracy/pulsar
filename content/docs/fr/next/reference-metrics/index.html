@@ -428,7 +428,7 @@ Available thresholds:</p>
 <tr><td>pulsar_ml_AddEntryBytesRate</td><td>Gauge</td><td>The bytes/s rate of messages added</td></tr>
 <tr><td>pulsar_ml_AddEntryWithReplicasBytesRate</td><td>Gauge</td><td>The bytes/s rate of messages added with replicas</td></tr>
 <tr><td>pulsar_ml_AddEntryErrors</td><td>Gauge</td><td>The number of addEntry requests that failed</td></tr>
-<tr><td>pulsar_ml_AddEntryLatencyBuckets</td><td>Histogram</td><td>The add entry latency of a ledger with a given quantile (threshold).</td></tr>
+<tr><td>pulsar_ml_AddEntryLatencyBuckets</td><td>Histogram</td><td>The latency of adding a ledger entry with a given quantile (threshold), including time spent on waiting in queue on the broker side.</td></tr>
 <tr><td>Available quantile:</td></tr>
 </tbody>
 </table>
@@ -443,7 +443,7 @@ Available thresholds:</p>
 <li>quantile=&quot;100.0_200.0&quot; is AddEntryLatency between (100ms, 200ms]</li>
 <li>quantile=&quot;200.0_1000.0&quot; is AddEntryLatency between (200ms, 1s]</li>
 </ul>
-<p>| | pulsar_ml_AddEntryLatencyBuckets_OVERFLOW | Gauge | The add entry latency &gt; 1s | | pulsar_ml_AddEntryMessagesRate | Gauge | The msg/s rate of messages added | | pulsar_ml_AddEntrySucceed | Gauge | The number of addEntry requests that succeeded | | pulsar_ml_EntrySizeBuckets | Histogram | The add entry size of a ledger with given quantile.<br>
+<p>| | pulsar_ml_AddEntryLatencyBuckets_OVERFLOW | Gauge | The number of times the AddEntryLatency is longer than 1 second | | pulsar_ml_AddEntryMessagesRate | Gauge | The msg/s rate of messages added | | pulsar_ml_AddEntrySucceed | Gauge | The number of addEntry requests that succeeded | | pulsar_ml_EntrySizeBuckets | Histogram | The added entry size of a ledger with a given quantile.<br>
 Available quantile:</p>
 <ul>
 <li>quantile=&quot;0.0_128.0&quot; is EntrySize between (0byte, 128byte]</li>
@@ -455,7 +455,7 @@ Available quantile:</p>
 <li>quantile=&quot;16384.0_102400.0&quot; is EntrySize between (16KB, 100KB]</li>
 <li>quantile=&quot;102400.0_1232896.0&quot; is EntrySize between (100KB, 1MB]</li>
 </ul>
-<p>| | pulsar_ml_EntrySizeBuckets_OVERFLOW |Gauge | The add entry size &gt; 1MB | | pulsar_ml_LedgerSwitchLatencyBuckets | Histogram | The ledger switch latency with given quantile.<br>
+<p>| | pulsar_ml_EntrySizeBuckets_OVERFLOW |Gauge | The number of times the EntrySize is larger than 1MB | | pulsar_ml_LedgerSwitchLatencyBuckets | Histogram | The ledger switch latency with a given quantile.<br>
 Available quantile:</p>
 <ul>
 <li>quantile=&quot;0.0_0.5&quot; is EntrySize between (0ms, 0.5ms]</li>
@@ -468,7 +468,20 @@ Available quantile:</p>
 <li>quantile=&quot;100.0_200.0&quot; is EntrySize between (100ms, 200ms]</li>
 <li>quantile=&quot;200.0_1000.0&quot; is EntrySize between (200ms, 1000ms]</li>
 </ul>
-<p>| | pulsar_ml_LedgerSwitchLatencyBuckets_OVERFLOW | Gauge | The ledger switch latency &gt; 1s | | pulsar_ml_MarkDeleteRate | Gauge | The rate of mark-delete ops/s | | pulsar_ml_NumberOfMessagesInBacklog | Gauge | The number of backlog messages for all the consumers | | pulsar_ml_ReadEntriesBytesRate | Gauge | The bytes/s rate of messages read | | pulsar_ml_ReadEntriesErrors | Gauge | The number of readEntries requests that failed | | pulsar_ml_ReadEntriesRate | Gauge | The msg/s rate of messages read | | pulsar_ml_ReadEntriesSucceeded | Gauge | The number of readEntries requests that succeeded | | pulsar_ml_StoredMessagesSize | Gauge | The total size of the messages in active ledgers (accounting for the multiple copies stored) |</p>
+<p>| | pulsar_ml_LedgerSwitchLatencyBuckets_OVERFLOW | Gauge | The number of times the ledger switch latency is longer than 1 second | | pulsar_ml_LedgerAddEntryLatencyBuckets | Histogram | The latency for bookie client to persist a ledger entry from broker to BookKeeper service with a given quantile (threshold).<br>
+Available quantile:</p>
+<ul>
+<li>quantile=&quot;0.0_0.5&quot; is LedgerAddEntryLatency between (0.0ms, 0.5ms]</li>
+<li>quantile=&quot;0.5_1.0&quot; is LedgerAddEntryLatency between (0.5ms, 1.0ms]</li>
+<li>quantile=&quot;1.0_5.0&quot; is LedgerAddEntryLatency between (1ms, 5ms]</li>
+<li>quantile=&quot;5.0_10.0&quot; is LedgerAddEntryLatency between (5ms, 10ms]</li>
+<li>quantile=&quot;10.0_20.0&quot; is LedgerAddEntryLatency between (10ms, 20ms]</li>
+<li>quantile=&quot;20.0_50.0&quot; is LedgerAddEntryLatency between (20ms, 50ms]</li>
+<li>quantile=&quot;50.0_100.0&quot; is LedgerAddEntryLatency between (50ms, 100ms]</li>
+<li>quantile=&quot;100.0_200.0&quot; is LedgerAddEntryLatency between (100ms, 200ms]</li>
+<li>quantile=&quot;200.0_1000.0&quot; is LedgerAddEntryLatency between (200ms, 1s]</li>
+</ul>
+<p>| | pulsar_ml_LedgerAddEntryLatencyBuckets_OVERFLOW | Gauge | The number of times the LedgerAddEntryLatency is longer than 1 second | | pulsar_ml_MarkDeleteRate | Gauge | The rate of mark-delete ops/s | | pulsar_ml_NumberOfMessagesInBacklog | Gauge | The number of backlog messages for all the consumers | | pulsar_ml_ReadEntriesBytesRate | Gauge | The bytes/s rate of messages read | | pulsar_ml_ReadEntriesErrors | Gauge | The number of readEntries requests that failed | | pulsar_ml_ReadEntriesRate | Gauge | The msg/s rate of messages read | | pulsar_ml_ReadEntriesSucceeded | Gauge | The number of readEntries requests that succeeded | | pulsar_ml_StoredMessagesSize | Gauge | The total size of the messages in active ledgers (accounting for the multiple copies stored) |</p>
 <h3><a class="anchor" aria-hidden="true" id="managed-cursor-acknowledgment-state"></a><a href="#managed-cursor-acknowledgment-state" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Managed cursor acknowledgment state</h3>
 <p>The acknowledgment state is persistent to the ledger first. When the acknowledgment state fails to be persistent to the ledger, they are persistent to ZooKeeper. To track the stats of acknowledgment, you can configure the metrics for the managed cursor.</p>
 <p>All the cursor acknowledgment state metrics are labelled with the following labels:</p>

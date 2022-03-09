@@ -47,7 +47,7 @@
 </thead>
 <tbody>
 <tr><td><code>elasticSearchUrl</code></td><td>String</td><td>true</td><td>&quot; &quot;（空字符串）</td><td>连接器要连接的 Elasticsearch 集群的 URL。</td></tr>
-<tr><td><code>indexName</code></td><td>String</td><td>true</td><td>&quot; &quot;（空字符串）</td><td>连接器要写入消息的索引名。</td></tr>
+<tr><td><code>indexName</code></td><td>String</td><td>false</td><td>&quot; &quot;（空字符串）</td><td>连接器要写入消息的索引名。 The default value is the topic name. It accepts date formats in the name to support event time based index with the pattern <code>%{+&lt;date-format&gt;}</code>. For example, suppose the event time of the record is 1645182000000L, the indexName is <code>logs-%{+yyyy-MM-dd}</code>, then the formatted index name would be <code>logs-2022-02-18</code>.</td></tr>
 <tr><td><code>schemaEnable</code></td><td>Boolean</td><td>false</td><td>false</td><td>打开 Schema Aware 模式。</td></tr>
 <tr><td><code>createIndexIfNeeded</code></td><td>Boolean</td><td>false</td><td>false</td><td>缺少索引时管理索引。</td></tr>
 <tr><td><code>maxRetries</code></td><td>Integer</td><td>false</td><td>1</td><td>Elasticsearch 请求的最大重试次数。 使用 -1 禁用它。</td></tr>
