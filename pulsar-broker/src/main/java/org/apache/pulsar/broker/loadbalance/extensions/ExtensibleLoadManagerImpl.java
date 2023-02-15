@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,10 @@ import org.apache.pulsar.broker.loadbalance.extensions.models.SplitCounter;
 import org.apache.pulsar.broker.loadbalance.extensions.models.SplitDecision;
 import org.apache.pulsar.broker.loadbalance.extensions.models.UnloadCounter;
 import org.apache.pulsar.broker.loadbalance.extensions.models.UnloadDecision;
+import org.apache.pulsar.broker.loadbalance.extensions.reporter.BrokerLoadDataReporter;
+import org.apache.pulsar.broker.loadbalance.extensions.reporter.TopBundleLoadDataReporter;
+import org.apache.pulsar.broker.loadbalance.extensions.scheduler.LoadManagerScheduler;
+import org.apache.pulsar.broker.loadbalance.extensions.scheduler.UnloadScheduler;
 import org.apache.pulsar.broker.loadbalance.extensions.store.LoadDataStore;
 import org.apache.pulsar.broker.loadbalance.extensions.store.LoadDataStoreException;
 import org.apache.pulsar.broker.loadbalance.extensions.store.LoadDataStoreFactory;
@@ -82,6 +88,8 @@ public class ExtensibleLoadManagerImpl implements ExtensibleLoadManager {
     private LoadDataStore<BrokerLoadData> brokerLoadDataStore;
     private LoadDataStore<TopBundlesLoadData> topBundlesLoadDataStore;
 
+    private LoadManagerScheduler unloadScheduler;
+
     @Getter
     private LoadManagerContext context;
 
@@ -90,6 +98,16 @@ public class ExtensibleLoadManagerImpl implements ExtensibleLoadManager {
 
     @Getter
     private final List<BrokerFilter> brokerFilterPipeline;
+
+    /**
+     * The load data reporter.
+     */
+    private BrokerLoadDataReporter brokerLoadDataReporter;
+
+    private TopBundleLoadDataReporter topBundleLoadDataReporter;
+
+    private ScheduledFuture brokerLoadDataReportTask;
+    private ScheduledFuture topBundlesLoadDataReportTask;
 
     private boolean started = false;
 
@@ -147,9 +165,42 @@ public class ExtensibleLoadManagerImpl implements ExtensibleLoadManager {
                 .brokerRegistry(brokerRegistry)
                 .brokerLoadDataStore(brokerLoadDataStore)
                 .topBundleLoadDataStore(topBundlesLoadDataStore).build();
-        // TODO: Start load data reporter.
 
-        // TODO: Start unload scheduler and bundle split scheduler
+
+        this.brokerLoadDataReporter =
+                new BrokerLoadDataReporter(pulsar, brokerRegistry.getBrokerId(), brokerLoadDataStore);
+
+        this.topBundleLoadDataReporter =
+                new TopBundleLoadDataReporter(pulsar, brokerRegistry.getBrokerId(), topBundlesLoadDataStore);
+
+        var interval = conf.getLoadBalancerReportUpdateMinIntervalMillis();
+        this.brokerLoadDataReportTask = this.pulsar.getLoadManagerExecutor()
+                .scheduleAtFixedRate(() -> {
+                            try {
+                                brokerLoadDataReporter.reportAsync(false);
+                                // TODO: update broker load metrics using getLocalData
+                            } catch (Throwable e) {
+                                log.error("Failed to run the broker load manager executor job.", e);
+                            }
+                        },
+                        interval,
+                        interval, TimeUnit.MILLISECONDS);
+
+        this.topBundlesLoadDataReportTask = this.pulsar.getLoadManagerExecutor()
+                .scheduleAtFixedRate(() -> {
+                            try {
+                                // TODO: consider excluding the bundles that are in the process of split.
+                                topBundleLoadDataReporter.reportAsync(false);
+                            } catch (Throwable e) {
+                                log.error("Failed to run the top bundles load manager executor job.", e);
+                            }
+                        },
+                        interval,
+                        interval, TimeUnit.MILLISECONDS);
+
+        // TODO: Start bundle split scheduler.
+        this.unloadScheduler = new UnloadScheduler(pulsar.getLoadManagerExecutor(), context, serviceUnitStateChannel);
+        this.unloadScheduler.start();
         this.started = true;
     }
 
@@ -264,8 +315,17 @@ public class ExtensibleLoadManagerImpl implements ExtensibleLoadManager {
             return;
         }
         try {
+            if (brokerLoadDataReportTask != null) {
+                brokerLoadDataReportTask.cancel(true);
+            }
+
+            if (topBundlesLoadDataReportTask != null) {
+                topBundlesLoadDataReportTask.cancel(true);
+            }
+
             this.brokerLoadDataStore.close();
             this.topBundlesLoadDataStore.close();
+            this.unloadScheduler.close();
         } catch (IOException ex) {
             throw new PulsarServerException(ex);
         } finally {

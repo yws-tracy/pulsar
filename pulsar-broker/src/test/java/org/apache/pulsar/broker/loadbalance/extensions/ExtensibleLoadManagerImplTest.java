@@ -99,6 +99,7 @@ import org.apache.pulsar.common.stats.Metrics;
 import org.apache.pulsar.metadata.api.extended.MetadataStoreExtended;
 import org.apache.pulsar.policies.data.loadbalancer.ResourceUsage;
 import org.apache.pulsar.policies.data.loadbalancer.SystemResourceUsage;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -125,6 +126,7 @@ public class ExtensibleLoadManagerImplTest extends MockedPulsarServiceBaseTest {
     private ServiceUnitStateChannelImpl channel2;
 
     @BeforeClass
+    @Override
     public void setup() throws Exception {
         conf.setAllowAutoTopicCreation(true);
         conf.setLoadManagerClassName(ExtensibleLoadManagerImpl.class.getName());
@@ -186,6 +188,7 @@ public class ExtensibleLoadManagerImplTest extends MockedPulsarServiceBaseTest {
     }
 
     @Override
+    @AfterClass
     protected void cleanup() throws Exception {
         pulsar1 = null;
         pulsar2.close();
@@ -327,7 +330,7 @@ public class ExtensibleLoadManagerImplTest extends MockedPulsarServiceBaseTest {
             usage.setDirectMemory(directMemory);
             usage.setBandwidthIn(bandwidthIn);
             usage.setBandwidthOut(bandwidthOut);
-            loadData.update(usage, 1, 2, 3, 4, conf);
+            loadData.update(usage, 1, 2, 3, 4, 5, conf);
             brokerLoadMetrics.set(loadData.toMetrics(pulsar.getAdvertisedAddress()));
         }
         {
